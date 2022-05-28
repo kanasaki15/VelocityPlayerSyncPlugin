@@ -61,7 +61,7 @@ public class Nanamiproxyplugin {
             ).add(
                     "MaxProtocolVer", "758"
             ).add(
-                    "VersionText","NanamiSystem 1.8-1.18.2"
+                    "VersionText","NanamiServer 1.8-1.18.2"
             ).add(
                     "ServerID","0"
             ).add(
