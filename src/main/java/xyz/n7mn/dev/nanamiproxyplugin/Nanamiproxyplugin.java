@@ -63,6 +63,8 @@ public class Nanamiproxyplugin {
             ).add(
                     "VersionText","NanamiServer 1.8-1.18.2"
             ).add(
+                    "ServerGroup","Sample"
+            ).add(
                     "ServerID","0"
             ).add(
                     "ServerName","Sample"
