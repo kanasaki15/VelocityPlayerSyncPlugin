@@ -47,7 +47,7 @@ public class Nanamiproxyplugin {
 
     private Optional<PluginContainer> plugin;
 
-    private HashMap<String, ServerList> ProxyServerList;
+    private HashMap<String, ServerList> ProxyServerList = new HashMap<>();
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
