@@ -3,6 +3,7 @@ package xyz.n7mn.dev.nanamiproxyplugin;
 import com.amihaiemil.eoyaml.Yaml;
 import com.amihaiemil.eoyaml.YamlMapping;
 import com.amihaiemil.eoyaml.YamlMappingBuilder;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.Subscribe;
@@ -10,19 +11,18 @@ import com.velocitypowered.api.event.proxy.ProxyPingEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerPing;
 import com.velocitypowered.api.util.Favicon;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
-import net.kyori.adventure.text.format.TextColor;
 import org.slf4j.Logger;
+import xyz.n7mn.dev.nanamiproxyplugin.JsonData.SendData;
 
 import java.io.*;
+import java.net.Socket;
 import java.nio.file.Files;
-import java.util.Base64;
-import java.util.Optional;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Plugin(
         id = "nanamiproxyplugin",
@@ -84,17 +84,63 @@ public class Nanamiproxyplugin {
 
         }
 
+        boolean NewConfig = false;
+        if (!file3.exists()){
+            YamlMappingBuilder builder = Yaml.createYamlMappingBuilder();
+            YamlMapping mapping = builder.add(
+                    "ServerIP", "localhost"
+            ).add(
+                    "ServerPort", "26666"
+            ).build();
 
+            String yml = mapping.toString();
+
+            try {
+                PrintWriter writer = new PrintWriter(file3);
+                writer.print(yml);
+                writer.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            NewConfig = true;
+        }
+
+
+        if (NewConfig){
+            logger.info("config.ymlの設定をしてください。");
+            return;
+        }
+
+
+        File ConfigFile = new File("./plugins/" + plugin.get().getDescription().getName().get() + "/config.yml");
+
+        if (!ConfigFile.exists()){
+            return;
+        }
+
+        String ServerIP = "localhost";
+        int ServerPort = 25565;
+
+        try {
+            YamlMapping mapping = Yaml.createYamlInput(ConfigFile).readYamlMapping();
+            ServerIP = mapping.string("ServerIP");
+            ServerPort = mapping.integer("ServerPort");
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+
+        logger.info("プレーヤー同期開始");
         Timer timer = new Timer();
 
+        AtomicInteger i = new AtomicInteger();
+        int finalServerPort = ServerPort;
+        String finalServerIP = ServerIP;
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                new Thread(()->{
-                    int size = proxyServer.getAllPlayers().size();
+                new Thread(()-> {
 
-                }
-                ).start();
+                }).start();
             }
         }, 0L, 1000L);
 
