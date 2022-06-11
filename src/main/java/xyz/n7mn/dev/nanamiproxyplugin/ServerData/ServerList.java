@@ -1,17 +1,18 @@
 package xyz.n7mn.dev.nanamiproxyplugin.ServerData;
 
-import java.util.Arrays;
-import java.util.Objects;
-
 public class ServerList {
 
     private String GroupName;
+    private int ServerID;
+    private String ServerName;
     private int PlayerCount;
     private String[] PlayerUUIDList;
     private String[] PlayerNameList;
 
-    public ServerList(String groupName, int playerCount, String[] playerUUIDList, String[] playerNameList) {
+    public ServerList(String groupName, int serverId, String serverName, int playerCount, String[] playerUUIDList, String[] playerNameList) {
         GroupName = groupName;
+        ServerID = serverId;
+        ServerName = serverName;
         PlayerCount = playerCount;
         PlayerUUIDList = playerUUIDList;
         PlayerNameList = playerNameList;
@@ -23,6 +24,22 @@ public class ServerList {
 
     public void setGroupName(String groupName) {
         GroupName = groupName;
+    }
+
+    public int getServerID() {
+        return ServerID;
+    }
+
+    public void setServerID(int serverID) {
+        ServerID = serverID;
+    }
+
+    public String getServerName() {
+        return ServerName;
+    }
+
+    public void setServerName(String serverName) {
+        ServerName = serverName;
     }
 
     public int getPlayerCount() {

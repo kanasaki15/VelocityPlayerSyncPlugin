@@ -3,6 +3,7 @@ package xyz.n7mn.dev.nanamiproxyplugin;
 import com.amihaiemil.eoyaml.Yaml;
 import com.amihaiemil.eoyaml.YamlMapping;
 import com.amihaiemil.eoyaml.YamlMappingBuilder;
+import com.amihaiemil.eoyaml.YamlNode;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -10,16 +11,20 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyPingEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.PluginContainer;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerPing;
 import com.velocitypowered.api.util.Favicon;
 import net.kyori.adventure.text.Component;
 import org.slf4j.Logger;
+import xyz.n7mn.dev.nanamiproxyplugin.JsonData.ReceiveData;
 import xyz.n7mn.dev.nanamiproxyplugin.JsonData.SendData;
+import xyz.n7mn.dev.nanamiproxyplugin.ServerData.ServerList;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -42,6 +47,8 @@ public class Nanamiproxyplugin {
 
     private Optional<PluginContainer> plugin;
 
+    private HashMap<String, ServerList> ProxyServerList;
+
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
 
@@ -57,6 +64,8 @@ public class Nanamiproxyplugin {
         if (!file2.exists()){
             YamlMappingBuilder builder = Yaml.createYamlMappingBuilder();
             YamlMapping mapping = builder.add(
+                    "ProxyName", "test"
+            ).add(
                     "MinProtocolVer", "47"
             ).add(
                     "MaxProtocolVer", "758"
@@ -113,9 +122,29 @@ public class Nanamiproxyplugin {
 
 
         File ConfigFile = new File("./plugins/" + plugin.get().getDescription().getName().get() + "/config.yml");
-
         if (!ConfigFile.exists()){
             return;
+        }
+
+        // 初期状態構築
+        File[] files = new File("./plugins/" + plugin.get().getDescription().getName().get()).listFiles();
+        for (File file : files){
+
+            if (!file.getName().startsWith("server-")){
+                continue;
+            }
+
+            try {
+                YamlMapping mapping = Yaml.createYamlInput(file).readYamlMapping();
+                String proxyName = mapping.string("ProxyName");
+                String serverGroup = mapping.string("ServerGroup");
+                int serverID = mapping.integer("ServerID");
+                String serverName = mapping.string("ServerName");
+
+                ProxyServerList.put(proxyName, new ServerList(serverGroup, serverID, serverName, 0, new String[0], new String[0]));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         String ServerIP = "localhost";
@@ -131,15 +160,55 @@ public class Nanamiproxyplugin {
 
         logger.info("プレーヤー同期開始");
         Timer timer = new Timer();
-
-        AtomicInteger i = new AtomicInteger();
         int finalServerPort = ServerPort;
         String finalServerIP = ServerIP;
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 new Thread(()-> {
+                    try {
+                        for (RegisteredServer server : proxyServer.getAllServers()){
+                            String proxyName = server.getServerInfo().getName();
+                            ServerList s = ProxyServerList.get(proxyName);
+                            if (s == null){
+                                continue;
+                            }
 
+                            // String serverGroup, long serverNo, String serverName, String[] playerUUIDList, String[] playerNameList
+                            String[] temp1 = new String[server.getPlayersConnected().size()];
+                            String[] temp2 = new String[server.getPlayersConnected().size()];
+
+                            int i = 0;
+                            for (Player p : server.getPlayersConnected()){
+                                temp1[i] = p.getUniqueId().toString();
+                                temp2[i] = p.getUsername();
+                                i++;
+                            }
+
+                            SendData data = new SendData(s.getGroupName(), s.getServerID(), s.getServerName(), temp1, temp2);
+                            Socket sock1 = new Socket(finalServerIP, finalServerPort);
+                            OutputStream out1 = sock1.getOutputStream();
+                            InputStream in1 = sock1.getInputStream();
+
+                            out1.write(new Gson().toJson(data).getBytes(StandardCharsets.UTF_8));
+                            out1.flush();
+
+                            byte[] tempReceive = new byte[262144];
+                            int size1 = in1.read(tempReceive);
+                            tempReceive = Arrays.copyOf(tempReceive, size1);
+                            ReceiveData receiveData = new Gson().fromJson(new String(tempReceive), ReceiveData.class);
+
+                            ProxyServerList.remove(server.getServerInfo().getName());
+                            ProxyServerList.put(server.getServerInfo().getName(), new ServerList(receiveData.getGroupName(), s.getServerID(), s.getServerName(), receiveData.getPlayerCount(), receiveData.getPlayerUUIDList(), receiveData.getPlayerList()));
+
+                            out1.close();
+                            in1.close();
+                            sock1.close();
+
+                        }
+                    } catch (Exception e){
+                        e.printStackTrace();
+                    }
                 }).start();
             }
         }, 0L, 1000L);
@@ -160,6 +229,11 @@ public class Nanamiproxyplugin {
             if (file1.exists()){
                 YamlMapping mapping = Yaml.createYamlInput(file1).readYamlMapping();
                 // System.out.println("---- debug ----\n"+mapping.toString()+"\n---- debug ----");
+
+                ServerList server = ProxyServerList.get(mapping.string("ProxyName"));
+                if (server != null){
+                    builder.onlinePlayers(server.getPlayerCount());
+                }
 
                 String desc = mapping.string("ServerText");
                 String verText = mapping.string("VersionText");
