@@ -28,11 +28,11 @@ import java.nio.file.Files;
 import java.util.*;
 
 @Plugin(
-        id = "nanamiproxyplugin",
-        name = "NanamiProxyPlugin",
+        id = "velocityplayersyncplugin",
+        name = "VelocityPlayerSyncPlugin",
         version = BuildConstants.VERSION,
-        description = "NanamiProxyPlugin",
-        url = "https://twitter.com/NanamiProxyPlugin",
+        description = "VelocityPlayerSyncPlugin",
+        url = "https://twitter.com/7mi_network",
         authors = {"7mi_chan"}
 )
 public class Nanamiproxyplugin {
@@ -60,6 +60,22 @@ public class Nanamiproxyplugin {
         }
 
         if (!file2.exists()){
+
+            // 他に鯖ごとの設定あったら生成しないようにする
+            boolean isFound = false;
+            File[] files = new File("./plugins/" + plugin.get().getDescription().getName().get()).listFiles();
+            for (File file : files){
+                if (file.getName().startsWith("server-") && !file.getName().startsWith("server-sample.7mi.xyz")){
+                    isFound = true;
+                    break;
+                }
+            }
+
+            if (isFound){
+                return;
+            }
+
+
             YamlMappingBuilder builder = Yaml.createYamlMappingBuilder();
             YamlMapping mapping = builder.add(
                     "ProxyName", "Sample"
@@ -90,7 +106,6 @@ public class Nanamiproxyplugin {
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
-
         }
 
         boolean NewConfig = false;
