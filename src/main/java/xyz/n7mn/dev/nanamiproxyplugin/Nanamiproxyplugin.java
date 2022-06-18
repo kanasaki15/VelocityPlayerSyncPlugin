@@ -16,7 +16,6 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerPing;
 import com.velocitypowered.api.util.Favicon;
 import net.kyori.adventure.text.Component;
-import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import xyz.n7mn.dev.nanamiproxyplugin.JsonData.ReceiveData;
 import xyz.n7mn.dev.nanamiproxyplugin.JsonData.SendData;
@@ -27,7 +26,6 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Plugin(
         id = "nanamiproxyplugin",
