@@ -32,7 +32,7 @@ import java.util.*;
         name = "NanamiProxyPlugin",
         version = BuildConstants.VERSION,
         description = "NanamiProxyPlugin",
-        url = "https://twitter.com/NanamiProxyPlugin",
+        url = "https://twitter.com/7mi_network",
         authors = {"7mi_chan"}
 )
 public class Nanamiproxyplugin {
