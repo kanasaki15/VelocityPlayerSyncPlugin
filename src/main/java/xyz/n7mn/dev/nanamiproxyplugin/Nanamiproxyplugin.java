@@ -28,8 +28,8 @@ import java.nio.file.Files;
 import java.util.*;
 
 @Plugin(
-        id = "velocityplayersyncplugin",
-        name = "VelocityPlayerSyncPlugin",
+        id = "nanamiproxyplugin",
+        name = "NanamiProxyPlugin",
         version = BuildConstants.VERSION,
         description = "VelocityPlayerSyncPlugin",
         url = "https://twitter.com/7mi_network",
@@ -60,21 +60,6 @@ public class Nanamiproxyplugin {
         }
 
         if (!file2.exists()){
-
-            // 他に鯖ごとの設定あったら生成しないようにする
-            boolean isFound = false;
-            File[] files = new File("./plugins/" + plugin.get().getDescription().getName().get()).listFiles();
-            for (File file : files){
-                if (file.getName().startsWith("server-") && !file.getName().startsWith("server-sample.7mi.xyz")){
-                    isFound = true;
-                    break;
-                }
-            }
-
-            if (isFound){
-                return;
-            }
-
 
             YamlMappingBuilder builder = Yaml.createYamlMappingBuilder();
             YamlMapping mapping = builder.add(
