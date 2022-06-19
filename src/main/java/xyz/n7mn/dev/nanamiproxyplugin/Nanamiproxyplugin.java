@@ -28,8 +28,8 @@ import java.nio.file.Files;
 import java.util.*;
 
 @Plugin(
-        id = "nanamiproxyplugin",
-        name = "NanamiProxyPlugin",
+        id = "velocityplayersyncplugin",
+        name = "VelocityPlayerSyncPlugin",
         version = BuildConstants.VERSION,
         description = "VelocityPlayerSyncPlugin",
         url = "https://twitter.com/7mi_network",
