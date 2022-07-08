@@ -152,6 +152,10 @@ public class Nanamiproxyplugin {
                             continue;
                         }
 
+                        if (!file.getName().startsWith("server-sample")){
+                            continue;
+                        }
+
                         try {
                             YamlMapping mapping = Yaml.createYamlInput(file).readYamlMapping();
                             String group = mapping.string("ServerGroup");
