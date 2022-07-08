@@ -152,7 +152,7 @@ public class Nanamiproxyplugin {
                             continue;
                         }
 
-                        if (!file.getName().startsWith("server-sample")){
+                        if (file.getName().startsWith("server-sample")){
                             continue;
                         }
 
