@@ -147,6 +147,7 @@ public class Nanamiproxyplugin {
                     File[] files = new File("./plugins/" + plugin.get().getDescription().getName().get()).listFiles();
                     List<ServerList> list = new ArrayList<>();
 
+                    Map<String, Boolean> temp = new HashMap<>();
                     for (File file : files){
                         if (!file.getName().startsWith("server-")){
                             continue;
@@ -183,6 +184,12 @@ public class Nanamiproxyplugin {
                                 playerNameList = temp2;
                             }
 
+                            if (temp.get(mapping.string("ProxyName")) != null){
+                                playerUUIDList = new String[0];
+                                playerNameList = new String[0];
+                            } else {
+                                temp.put(mapping.string("ProxyName"), true);
+                            }
                             list.add(new ServerList(group, serverID, serverName, playerCount, playerUUIDList, playerNameList));
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -210,7 +217,7 @@ public class Nanamiproxyplugin {
                             outputStream.flush();
 
                             //logger.info("正常にデータを送信。 受信データ組み立てます...");
-                            byte[] receiveData = new byte[262144];
+                            byte[] receiveData = new byte[52428800];
                             InputStream inputStream = socket.getInputStream();
                             int i = inputStream.read(receiveData);
                             receiveData = Arrays.copyOf(receiveData, i);
@@ -219,6 +226,16 @@ public class Nanamiproxyplugin {
                             //logger.info("受信データ組み立て完了。同期します。");
                             ProxyServerList.put(fromJson.getGroupName(), fromJson);
                             //logger.info(fromJson.getGroupName() + "のサーバーが同期完了。");
+
+                            inputStream.close();
+                            outputStream.close();
+                            socket.close();
+
+                            try {
+                                Thread.sleep(500L);
+                            } catch (Exception e){
+                                e.printStackTrace();
+                            }
 
                         } catch (IOException e) {
                             e.printStackTrace();
