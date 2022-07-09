@@ -149,11 +149,7 @@ public class Nanamiproxyplugin {
 
                     Map<String, Boolean> temp = new HashMap<>();
                     for (File file : files){
-                        if (!file.getName().startsWith("server-")){
-                            continue;
-                        }
-
-                        if (file.getName().startsWith("server-sample")){
+                        if (!file.getName().startsWith("server-") || file.getName().startsWith("server-sample")){
                             continue;
                         }
 
