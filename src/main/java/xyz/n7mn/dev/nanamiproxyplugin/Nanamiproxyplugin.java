@@ -50,7 +50,7 @@ public class Nanamiproxyplugin {
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
 
-        plugin = proxyServer.getPluginManager().getPlugin("nanamiproxyplugin");
+        plugin = proxyServer.getPluginManager().getPlugin("velocityplayersyncplugin");
 
         File file1 = new File("./plugins/" + plugin.get().getDescription().getName().get());
         File file2 = new File("./plugins/" + plugin.get().getDescription().getName().get() + "/server-sample.7mi.xyz.yml");
@@ -69,7 +69,7 @@ public class Nanamiproxyplugin {
             ).add(
                     "MaxProtocolVer", "758"
             ).add(
-                    "VersionText","NanamiProxySystem 2.0"
+                    "VersionText","VelocityPlayerSyncPlugin 1.0.1"
             ).add(
                     "ServerGroup","Sample"
             ).add(
