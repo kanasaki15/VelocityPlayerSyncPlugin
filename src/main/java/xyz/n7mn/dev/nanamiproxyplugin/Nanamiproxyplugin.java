@@ -17,9 +17,7 @@ import com.velocitypowered.api.proxy.server.ServerPing;
 import com.velocitypowered.api.util.Favicon;
 import net.kyori.adventure.text.Component;
 import org.slf4j.Logger;
-import xyz.n7mn.dev.nanamiproxyplugin.JsonData.ReceiveData;
-import xyz.n7mn.dev.nanamiproxyplugin.JsonData.SendData;
-import xyz.n7mn.dev.nanamiproxyplugin.ServerData.ServerList;
+import xyz.n7mn.dev.nanamiproxyplugin.data.ServerData;
 
 import java.io.*;
 import java.net.Socket;
@@ -45,7 +43,7 @@ public class Nanamiproxyplugin {
 
     private Optional<PluginContainer> plugin;
 
-    private HashMap<String, ReceiveData> ProxyServerList = new HashMap<>();
+    private List<ServerData> ServerList = new ArrayList<>();
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
@@ -60,29 +58,16 @@ public class Nanamiproxyplugin {
         }
 
         if (!file2.exists()){
-
-            YamlMappingBuilder builder = Yaml.createYamlMappingBuilder();
-            YamlMapping mapping = builder.add(
-                    "ProxyName", "Sample"
-            ).add(
-                    "MinProtocolVer", "47"
-            ).add(
-                    "MaxProtocolVer", "758"
-            ).add(
-                    "VersionText","NanamiProxySystem 2.0"
-            ).add(
-                    "ServerGroup","Sample"
-            ).add(
-                    "ServerID","0"
-            ).add(
-                    "ServerName","Sample"
-            ).add(
-                    "ServerText","サンプルファイルです。 「sample.7mi.xyz」の部分を実際のアドレスに置き換えてください。"
-            ).add(
-                    "ServerMaxPlayers","100"
-            ).build();
-
-            String yml = mapping.toString();
+            String yml = "" +
+                    "ProxyName: Sample\n" +
+                    "MinProtocolVer: 47\n" +
+                    "MaxProtocolVer: 758\n" +
+                    "VersionText: NanamiProxySystem 2.0\n" +
+                    "ServerGroup: Sample\n" +
+                    "ServerID: 0\n" +
+                    "ServerName: Sample\n" +
+                    "ServerText: サンプルファイルです。 「sample.7mi.xyz」の部分を実際のアドレスに置き換えてください。\n" +
+                    "ServerMaxPlayers: 100";
 
             try {
                 PrintWriter writer = new PrintWriter(file2);
@@ -95,14 +80,17 @@ public class Nanamiproxyplugin {
 
         boolean NewConfig = false;
         if (!file3.exists()){
-            YamlMappingBuilder builder = Yaml.createYamlMappingBuilder();
-            YamlMapping mapping = builder.add(
-                    "ServerIP", "localhost"
-            ).add(
-                    "ServerPort", "26666"
-            ).build();
-
-            String yml = mapping.toString();
+            String yml = "" +
+                    "# trueで集計同期サーバー機能オン。1つだけtrueにしてあとはfalseにして同期させる想定。もちろんfalseでも同期できないだけで動く。\n" +
+                    "ProxyMode: false\n" +
+                    "# 上の集計同期サーバー機能がオンのとき、何番のポートで受付するかの設定\n" +
+                    "ProxyPort: 30000\n" +
+                    "# 今はまだ未実装。そのうちhttpが追加される\n" +
+                    "ProxyServerMode: tcp\n" +
+                    "# 集計同期サーバーのIP\n" +
+                    "ProxyServerIP: localhost\n" +
+                    "# 集計同期サーバーのポート\n" +
+                    "ProxyServerPort: 30000";
 
             try {
                 PrintWriter writer = new PrintWriter(file3);
@@ -145,98 +133,10 @@ public class Nanamiproxyplugin {
                     // 同期する鯖のリストを構築する
                     //logger.info("同期するサーバーのリストを構築中...");
                     File[] files = new File("./plugins/" + plugin.get().getDescription().getName().get()).listFiles();
-                    List<ServerList> list = new ArrayList<>();
-
-                    Map<String, Boolean> temp = new HashMap<>();
-                    for (File file : files){
-                        if (!file.getName().startsWith("server-") || file.getName().startsWith("server-sample")){
-                            continue;
-                        }
-
-                        try {
-                            YamlMapping mapping = Yaml.createYamlInput(file).readYamlMapping();
-                            String group = mapping.string("ServerGroup");
-                            String serverName = mapping.string("ServerName");
-                            int serverID = mapping.integer("ServerID");
-                            int playerCount = 0;
-                            String[] playerUUIDList = new String[0];
-                            String[] playerNameList = new String[0];
-
-                            Optional<RegisteredServer> server = proxyServer.getServer(mapping.string("ProxyName"));
-                            if (server.isPresent()){
-                                Collection<Player> players = server.get().getPlayersConnected();
-
-                                String[] temp1 = new String[players.size()];
-                                String[] temp2 = new String[players.size()];
-
-                                for (Player player : players){
-                                    temp1[playerCount] = player.getUniqueId().toString();
-                                    temp2[playerCount] = player.getUsername();
-
-                                    playerCount++;
-                                }
-
-                                playerUUIDList = temp1;
-                                playerNameList = temp2;
-                            }
-
-                            if (temp.get(mapping.string("ProxyName")) != null){
-                                playerUUIDList = new String[0];
-                                playerNameList = new String[0];
-                            } else {
-                                temp.put(mapping.string("ProxyName"), true);
-                            }
-                            list.add(new ServerList(group, serverID, serverName, playerCount, playerUUIDList, playerNameList));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            return;
-                        }
-                    }
 
                     //logger.info("構築完了。同期対象サーバー数： " + list.size());
 
                     // 同期スタート
-                    ProxyServerList.clear();
-                    for (ServerList server : list){
-                        // 送信データ組み立て
-                        SendData data = new SendData(server.getGroupName(), server.getServerID(), server.getServerName(), server.getPlayerUUIDList(), server.getPlayerNameList());
-
-                        // TCP通信開始
-                        try {
-                            //logger.info("同期サーバーに接続中...");
-                            Socket socket = new Socket(finalConfigYaml.string("ServerIP"), finalConfigYaml.integer("ServerPort"));
-
-                            OutputStream outputStream = socket.getOutputStream();
-                            String json = new Gson().toJson(data);
-
-                            outputStream.write(json.getBytes(StandardCharsets.UTF_8));
-                            outputStream.flush();
-
-                            //logger.info("正常にデータを送信。 受信データ組み立てます...");
-                            byte[] receiveData = new byte[52428800];
-                            InputStream inputStream = socket.getInputStream();
-                            int i = inputStream.read(receiveData);
-                            receiveData = Arrays.copyOf(receiveData, i);
-                            ReceiveData fromJson = new Gson().fromJson(new String(receiveData, StandardCharsets.UTF_8), ReceiveData.class);
-
-                            //logger.info("受信データ組み立て完了。同期します。");
-                            ProxyServerList.put(fromJson.getGroupName(), fromJson);
-                            //logger.info(fromJson.getGroupName() + "のサーバーが同期完了。");
-
-                            inputStream.close();
-                            outputStream.close();
-                            socket.close();
-
-                            try {
-                                Thread.sleep(500L);
-                            } catch (Exception e){
-                                e.printStackTrace();
-                            }
-
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
 
                 }).start();
 
@@ -254,79 +154,6 @@ public class Nanamiproxyplugin {
         ServerPing.Builder builder = ping.asBuilder();
         Component text = ping.getDescriptionComponent();
 
-        try {
 
-            File file1 = new File("./plugins/" + plugin.get().getDescription().getName().get() + "/server-" + hostName + ".yml");
-
-            if (file1.exists()){
-                YamlMapping mapping = Yaml.createYamlInput(file1).readYamlMapping();
-
-                ReceiveData data = ProxyServerList.get(mapping.string("ServerGroup"));
-                if (data != null){
-                    builder.onlinePlayers(data.getPlayerCount());
-
-                    List<ServerPing.SamplePlayer> players = new ArrayList<>();
-                    for (int i = 0; i < data.getPlayerCount(); i++){
-                        ServerPing.SamplePlayer player = new ServerPing.SamplePlayer(data.getPlayerList()[i], UUID.fromString(data.getPlayerUUIDList()[i]));
-                        players.add(player);
-                    }
-
-                    builder.samplePlayers(players.toArray(ServerPing.SamplePlayer[]::new));
-                }
-                builder.maximumPlayers(mapping.integer("ServerMaxPlayers"));
-
-                String desc = mapping.string("ServerText");
-                String verText = mapping.string("VersionText");
-
-                if (desc != null){
-                    text = Component.text(desc);
-                }
-
-                if (verText != null){
-
-                    int minProtocolVer = Integer.parseInt(mapping.string("MinProtocolVer"));
-                    int maxProtocolVer = Integer.parseInt(mapping.string("MaxProtocolVer"));
-
-                    if (e.getConnection().getProtocolVersion().getProtocol() >= minProtocolVer && e.getConnection().getProtocolVersion().getProtocol() <= maxProtocolVer){
-                        builder.version(new ServerPing.Version(e.getConnection().getProtocolVersion().getProtocol(), verText));
-                    } else if (e.getConnection().getProtocolVersion().getProtocol() >= maxProtocolVer){
-                        builder.version(new ServerPing.Version(maxProtocolVer, verText));
-                    } else if (e.getConnection().getProtocolVersion().getProtocol() <= minProtocolVer){
-                        builder.version(new ServerPing.Version(minProtocolVer, verText));
-                    } else {
-                        builder.version(new ServerPing.Version(maxProtocolVer, verText));
-                    }
-                    
-                }
-            }
-
-
-            //String url = ping.getFavicon().get().getBase64Url();
-            //System.out.println("icon : "+url);
-
-            File file2 = new File("./plugins/" + plugin.get().getDescription().getName().get() + "/" + hostName + ".png");
-            //System.out.println(file.toPath());
-
-            if (file2.exists()){
-                //System.out.println("!!");
-                String contentType = Files.probeContentType(file2.toPath());
-
-                StringBuilder sb = new StringBuilder();
-                sb.append("data:");
-                sb.append(contentType);
-                sb.append(";base64,");
-                sb.append(Base64.getEncoder().encodeToString(Files.readAllBytes(file2.toPath())));
-
-                Favicon favicon = new Favicon(sb.toString());
-                //System.out.println(sb.toString());
-                builder.favicon(favicon);
-            }
-
-            builder.description(text);
-            e.setPing(builder.build());
-
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
     }
 }
