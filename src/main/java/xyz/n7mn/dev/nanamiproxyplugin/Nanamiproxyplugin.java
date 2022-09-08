@@ -44,6 +44,7 @@ public class Nanamiproxyplugin {
     private Optional<PluginContainer> plugin;
 
     private List<ServerData> ServerList = new ArrayList<>();
+    private HashMap<String, String> ServerIPList = new HashMap<>();
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
@@ -53,28 +54,44 @@ public class Nanamiproxyplugin {
         File file1 = new File("./plugins/" + plugin.get().getDescription().getName().get());
         File file2 = new File("./plugins/" + plugin.get().getDescription().getName().get() + "/server-sample.7mi.xyz.yml");
         File file3 = new File("./plugins/" + plugin.get().getDescription().getName().get() + "/config.yml");
+
+        new SyncServer(file3).start();
+
         if (!file1.exists()){
             file1.mkdir();
         }
 
         if (!file2.exists()){
-            String yml = "" +
-                    "ProxyName: Sample\n" +
-                    "MinProtocolVer: 47\n" +
-                    "MaxProtocolVer: 758\n" +
-                    "VersionText: NanamiProxySystem 2.0\n" +
-                    "ServerGroup: Sample\n" +
-                    "ServerID: 0\n" +
-                    "ServerName: Sample\n" +
-                    "ServerText: サンプルファイルです。 「sample.7mi.xyz」の部分を実際のアドレスに置き換えてください。\n" +
-                    "ServerMaxPlayers: 100";
 
-            try {
-                PrintWriter writer = new PrintWriter(file2);
-                writer.print(yml);
-                writer.close();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
+            // すでに他のファイルあったら生成しない
+            File[] files = new File("./plugins/" + plugin.get().getDescription().getName().get()).listFiles();
+            boolean f = false;
+            for (File file : files){
+                if (file.getName().toLowerCase().startsWith("server-")){
+                    f = true;
+                    break;
+                }
+            }
+
+            if (!f){
+                String yml = "" +
+                        "ProxyName: Sample\n" +
+                        "MinProtocolVer: 47\n" +
+                        "MaxProtocolVer: 758\n" +
+                        "VersionText: NanamiProxySystem 2.0\n" +
+                        "ServerGroup: Sample\n" +
+                        "ServerID: 0\n" +
+                        "ServerName: Sample\n" +
+                        "ServerText: サンプルファイルです。 「sample.7mi.xyz」の部分を実際のアドレスに置き換えてください。\n" +
+                        "ServerMaxPlayers: 100";
+
+                try {
+                    PrintWriter writer = new PrintWriter(file2);
+                    writer.print(yml);
+                    writer.close();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -90,8 +107,11 @@ public class Nanamiproxyplugin {
                     "# 集計同期サーバーのIP\n" +
                     "ProxyServerIP: localhost\n" +
                     "# 集計同期サーバーのポート\n" +
-                    "ProxyServerPort: 30000";
-
+                    "ProxyServerPort: 30000\n" +
+                    "\n" +
+                    "\n" +
+                    "# 下のいじらないでね\n" +
+                    "ConfigVer: 1.1";
             try {
                 PrintWriter writer = new PrintWriter(file3);
                 writer.print(yml);
@@ -133,6 +153,34 @@ public class Nanamiproxyplugin {
                     // 同期する鯖のリストを構築する
                     //logger.info("同期するサーバーのリストを構築中...");
                     File[] files = new File("./plugins/" + plugin.get().getDescription().getName().get()).listFiles();
+
+                    HashMap<String, List<ServerData>> temp = new HashMap<>();
+                    for (File file : files){
+                        if (!file.getName().startsWith("server-") || !file.getName().startsWith("server-sample.7mi.xyz")){
+                            continue;
+                        }
+
+                        try {
+                            YamlMapping yml = Yaml.createYamlInput(file).readYamlMapping();
+
+                            String IP = file.getName().replaceAll("server-","").replaceAll(".yml","");
+
+                            List<ServerData> t = new ArrayList<>();
+                            t.add(new ServerData(yml.string("ProxyName"), yml.string("ServerGroup"), yml.integer("ServerID"), yml.string("ServerName"), null));
+
+                            temp.put(IP, t);
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    // 同期データ作成
+                    for (Player player : proxyServer.getAllPlayers()){
+                        String ip = player.getVirtualHost().get().getHostName();
+
+
+                    }
 
                     //logger.info("構築完了。同期対象サーバー数： " + list.size());
 

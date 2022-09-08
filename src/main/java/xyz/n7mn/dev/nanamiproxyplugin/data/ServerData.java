@@ -9,19 +9,13 @@ public class ServerData {
     private String ServerGroup;
     private int ServerID;
     private String ServerName;
-    private String ProxyVer;
-    private int MinJoinProtocolVer;
-    private int MaxJoinProtocolVer;
     private List<PlayerData> playerList;
 
-    public ServerData(String proxyName, String serverGroup, int serverID, String serverName, String proxyVer, int minJoinProtocolVer, int maxJoinProtocolVer, List<PlayerData> playerList) {
+    public ServerData(String proxyName, String serverGroup, int serverID, String serverName, List<PlayerData> playerList) {
         ProxyName = proxyName;
         ServerGroup = serverGroup;
         ServerID = serverID;
         ServerName = serverName;
-        ProxyVer = proxyVer;
-        MinJoinProtocolVer = minJoinProtocolVer;
-        MaxJoinProtocolVer = maxJoinProtocolVer;
         this.playerList = playerList;
     }
 
@@ -55,30 +49,6 @@ public class ServerData {
 
     public void setServerName(String serverName) {
         ServerName = serverName;
-    }
-
-    public String getProxyVer() {
-        return ProxyVer;
-    }
-
-    public void setProxyVer(String proxyVer) {
-        ProxyVer = proxyVer;
-    }
-
-    public int getMinJoinProtocolVer() {
-        return MinJoinProtocolVer;
-    }
-
-    public void setMinJoinProtocolVer(int minJoinProtocolVer) {
-        MinJoinProtocolVer = minJoinProtocolVer;
-    }
-
-    public int getMaxJoinProtocolVer() {
-        return MaxJoinProtocolVer;
-    }
-
-    public void setMaxJoinProtocolVer(int maxJoinProtocolVer) {
-        MaxJoinProtocolVer = maxJoinProtocolVer;
     }
 
     public List<PlayerData> getPlayerList() {
