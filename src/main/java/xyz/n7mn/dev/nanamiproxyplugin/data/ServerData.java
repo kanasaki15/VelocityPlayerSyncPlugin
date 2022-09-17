@@ -1,22 +1,27 @@
 package xyz.n7mn.dev.nanamiproxyplugin.data;
 
-import java.util.List;
+import java.util.HashMap;
 import java.util.UUID;
 
 public class ServerData {
 
     private String ProxyName;
-    private String ServerGroup;
-    private int ServerID;
     private String ServerName;
-    private List<PlayerData> playerList;
+    private int ServerID;
+    private HashMap<UUID,String> PlayerList;
 
-    public ServerData(String proxyName, String serverGroup, int serverID, String serverName, List<PlayerData> playerList) {
-        ProxyName = proxyName;
-        ServerGroup = serverGroup;
-        ServerID = serverID;
-        ServerName = serverName;
-        this.playerList = playerList;
+    public ServerData(){
+        this.ProxyName = "";
+        this.ServerName = "";
+        this.ServerID = -1;
+        this.PlayerList = new HashMap<>();
+    }
+
+    public ServerData(String proxyName, String serverName, int serverID, HashMap<UUID,String> playerList){
+        this.ProxyName = proxyName;
+        this.ServerName = serverName;
+        this.ServerID = serverID;
+        this.PlayerList = playerList;
     }
 
     public String getProxyName() {
@@ -27,12 +32,12 @@ public class ServerData {
         ProxyName = proxyName;
     }
 
-    public String getServerGroup() {
-        return ServerGroup;
+    public String getServerName() {
+        return ServerName;
     }
 
-    public void setServerGroup(String serverGroup) {
-        ServerGroup = serverGroup;
+    public void setServerName(String serverName) {
+        ServerName = serverName;
     }
 
     public int getServerID() {
@@ -43,38 +48,11 @@ public class ServerData {
         ServerID = serverID;
     }
 
-    public String getServerName() {
-        return ServerName;
+    public HashMap<UUID, String> getPlayerList() {
+        return PlayerList;
     }
 
-    public void setServerName(String serverName) {
-        ServerName = serverName;
-    }
-
-    public List<PlayerData> getPlayerList() {
-        return playerList;
-    }
-
-    public void setPlayerList(List<PlayerData> playerList) {
-        this.playerList = playerList;
-    }
-}
-
-
-class PlayerData {
-    private UUID UserUUID;
-    private String Username;
-
-    public PlayerData(UUID userUUID, String username){
-        this.UserUUID = userUUID;
-        this.Username = username;
-    }
-
-    public String getUsername() {
-        return Username;
-    }
-
-    public UUID getUserUUID() {
-        return UserUUID;
+    public void setPlayerList(HashMap<UUID, String> playerList) {
+        PlayerList = playerList;
     }
 }
