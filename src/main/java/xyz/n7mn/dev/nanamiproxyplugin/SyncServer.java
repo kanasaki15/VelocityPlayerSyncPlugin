@@ -4,6 +4,7 @@ import com.amihaiemil.eoyaml.Yaml;
 import com.amihaiemil.eoyaml.YamlMapping;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.slf4j.Logger;
 import xyz.n7mn.dev.nanamiproxyplugin.api.ServerInfo;
 import xyz.n7mn.dev.nanamiproxyplugin.data.ServerData;
 
@@ -11,8 +12,6 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -20,10 +19,12 @@ public class SyncServer extends Thread {
 
     private final File config;
     private final ServerInfo ServerInfoAPI;
+    private final Logger logger;
 
-    public SyncServer(File file, ServerInfo api) {
+    public SyncServer(File file, ServerInfo api, Logger logger) {
         this.config = file;
         this.ServerInfoAPI = api;
+        this.logger = logger;
     }
 
     @Override
@@ -45,7 +46,8 @@ public class SyncServer extends Thread {
                 int proxyPort = ConfigYaml.integer("ProxyPort");
                 ServerSocket ServerSocket = new ServerSocket(proxyPort);
 
-                System.out.println("サーバー機能をTCP ポート "+proxyPort+"で起動しました。");
+                logger.info("サーバー機能をTCP ポート "+proxyPort+"で起動しました。");
+
                 while (true) {
                     Socket socket = ServerSocket.accept();
                     InputStream inputStream = socket.getInputStream();
