@@ -1,4 +1,4 @@
-# VelocityPlayerSyncPlugin
+# NanamiProxyPlugin
 Velocityプラグイン
 
 ## 主な機能
