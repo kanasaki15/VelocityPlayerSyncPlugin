@@ -35,10 +35,10 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 @Plugin(
-        id = "velocityplayersyncplugin",
-        name = "VelocityPlayerSyncPlugin",
+        id = "nanamiproxyplugin",
+        name = "NanamiProxyPlugin",
         version = BuildConstants.VERSION,
-        description = "VelocityPlayerSyncPlugin",
+        description = "NanamiProxyPlugin",
         url = "https://twitter.com/7mi_network",
         authors = {"7mi_chan"}
 )
