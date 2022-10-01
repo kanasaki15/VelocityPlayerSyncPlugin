@@ -67,7 +67,7 @@ public class Nanamiproxyplugin {
 
         api = new ServerInfo("./plugins/" + plugin.get().getDescription().getName().get());
 
-        new SyncServer(file3, api, logger).start();
+        new SyncServer(file3, api).start();
 
         if (!file1.exists()){
             file1.mkdir();
@@ -166,7 +166,7 @@ public class Nanamiproxyplugin {
                 new Thread(()-> {
                     Collection<Player> players = proxyServer.getAllPlayers();
                     // 前回の同期と変わってなければ処理しない
-                    if (tempPlayerList.size() == players.size() && ServerList.size() > 0){
+                    if (tempPlayerList.size() == players.size()){
                         return;
                     }
 
@@ -181,7 +181,7 @@ public class Nanamiproxyplugin {
 
                                 Pattern compile = Pattern.compile("server\\-(.*)\\.yml");
                                 Matcher matcher = compile.matcher(file.getName());
-                                String hostName = matcher.find() ? matcher.group(1) : "";
+                                String hostName = matcher.find() ? matcher.group() : "";
 
                                 //ServerInfoData(String proxyServerName, int joinMinProtocolVer, int joinMaxProtocolVer, String verText, String serverName, int serverID, String serverBio, int serverMaxPlayers, HashMap<UUID, String> playerList)
                                 ServerInfoData data = new ServerInfoData(
@@ -210,17 +210,15 @@ public class Nanamiproxyplugin {
                     // プレーヤーのリストを構築
                     tempPlayerList.clear();
                     for (Player player : players){
-                        if (player.getCurrentServer().isPresent()){
-                            tempPlayerList.put(player.getCurrentServer().get().getServerInfo().getName(), player.getUniqueId());
+                        tempPlayerList.put(player.getCurrentServer().get().getServerInfo().getName(), player.getUniqueId());
 
-                            ServerInfoData data = ServerList.get(player.getVirtualHost().get().getHostName());
-                            if (data != null){
-                                // 設定ファイルで指定されている接続先のサーバー名と一致しなければ追加しない
-                                if (data.getProxyServerName().equals(player.getCurrentServer().get().getServerInfo().getName())){
-                                    HashMap<UUID, String> list = new HashMap<>(data.getPlayerList());
-                                    list.put(player.getUniqueId(), player.getUsername());
-                                    data.setPlayerList(list);
-                                }
+                        ServerInfoData data = ServerList.get(player.getVirtualHost().get().getHostName());
+                        if (data != null){
+                            // 設定ファイルで指定されている接続先のサーバー名と一致しなければ追加しない
+                            if (data.getProxyServerName().equals(player.getCurrentServer().get().getServerInfo().getName())){
+                                HashMap<UUID, String> list = new HashMap<>(data.getPlayerList());
+                                list.put(player.getUniqueId(), player.getUsername());
+                                data.setPlayerList(list);
                             }
                         }
                     }
