@@ -2,9 +2,7 @@ package xyz.n7mn.dev.nanamiproxyplugin;
 
 import com.amihaiemil.eoyaml.Yaml;
 import com.amihaiemil.eoyaml.YamlMapping;
-import com.amihaiemil.eoyaml.YamlMappingBuilder;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -14,11 +12,9 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerPing;
 import com.velocitypowered.api.util.Favicon;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
 import org.slf4j.Logger;
 import xyz.n7mn.dev.nanamiproxyplugin.api.ServerInfo;
 import xyz.n7mn.dev.nanamiproxyplugin.data.ServerData;
@@ -35,10 +31,10 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 @Plugin(
-        id = "velocityplayersyncplugin",
-        name = "VelocityPlayerSyncPlugin",
+        id = "nanamiproxyplugin",
+        name = "NanamiProxyPlugin",
         version = BuildConstants.VERSION,
-        description = "VelocityPlayerSyncPlugin",
+        description = "NanamiProxyPlugin",
         url = "https://twitter.com/7mi_network",
         authors = {"7mi_chan"}
 )
@@ -59,7 +55,7 @@ public class Nanamiproxyplugin {
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
 
-        plugin = proxyServer.getPluginManager().getPlugin("velocityplayersyncplugin");
+        plugin = proxyServer.getPluginManager().getPlugin("nanamiproxyplugin");
 
         File file1 = new File("./plugins/" + plugin.get().getDescription().getName().get());
         File file2 = new File("./plugins/" + plugin.get().getDescription().getName().get() + "/server-sample.7mi.xyz.yml");
@@ -67,7 +63,7 @@ public class Nanamiproxyplugin {
 
         api = new ServerInfo("./plugins/" + plugin.get().getDescription().getName().get());
 
-        new SyncServer(file3, api, logger).start();
+        new SyncServer(file3, api).start();
 
         if (!file1.exists()){
             file1.mkdir();
@@ -155,6 +151,44 @@ public class Nanamiproxyplugin {
 
         boolean isProxyMode = Boolean.parseBoolean(ConfigYaml.string("ProxyMode"));
 
+        // 同期する鯖のリストを構築する
+        ServerList.clear();
+
+        File[] files = new File("./plugins/" + plugin.get().getDescription().getName().get()).listFiles();
+        for (File file : files){
+            if (file.getName().toLowerCase().startsWith("server-") && file.getName().toLowerCase().endsWith(".yml")){
+                try {
+                    YamlMapping serverConfig = Yaml.createYamlInput(file).readYamlMapping();
+
+                    Pattern compile = Pattern.compile("server\\-(.*)\\.yml");
+                    Matcher matcher = compile.matcher(file.getName());
+                    String hostName = matcher.find() ? matcher.group() : "";
+
+                    //ServerInfoData(String proxyServerName, int joinMinProtocolVer, int joinMaxProtocolVer, String verText, String serverName, int serverID, String serverBio, int serverMaxPlayers, HashMap<UUID, String> playerList)
+                    ServerInfoData data = new ServerInfoData(
+                            hostName.replaceAll("server-","").replaceAll(".yml",""),
+                            serverConfig.string("ProxyName"),
+                            serverConfig.integer("MinProtocolVer"),
+                            serverConfig.integer("MaxProtocolVer"),
+                            serverConfig.string("VersionText"),
+                            serverConfig.string("ServerGroup"),
+                            serverConfig.integer("ServerID"),
+                            serverConfig.string("ServerText"),
+                            serverConfig.integer("ServerMaxPlayers"),
+                            new HashMap<>()
+                    );
+
+                    if (!hostName.equals("")){
+                        System.out.println(hostName);
+                        ServerList.put(hostName.replaceAll("server-","").replaceAll(".yml",""), data);
+                    }
+
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
         // 定期タスク生成して同期
         HashMap<String, UUID> tempPlayerList = new HashMap<>();
 
@@ -163,12 +197,14 @@ public class Nanamiproxyplugin {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
+                Collection<Player> players = proxyServer.getAllPlayers();
+                // 前回の同期と変わってなければ処理しない
+                if (tempPlayerList.size() == players.size()){
+                    return;
+                }
+
                 new Thread(()-> {
-                    Collection<Player> players = proxyServer.getAllPlayers();
-                    // 前回の同期と変わってなければ処理しない
-                    if (tempPlayerList.size() == players.size() && ServerList.size() > 0){
-                        return;
-                    }
+
 
                     // 同期する鯖のリストを構築する
                     ServerList.clear();
@@ -181,11 +217,11 @@ public class Nanamiproxyplugin {
 
                                 Pattern compile = Pattern.compile("server\\-(.*)\\.yml");
                                 Matcher matcher = compile.matcher(file.getName());
-                                String hostName = matcher.find() ? matcher.group(1) : "";
+                                String hostName = matcher.find() ? matcher.group() : "";
 
                                 //ServerInfoData(String proxyServerName, int joinMinProtocolVer, int joinMaxProtocolVer, String verText, String serverName, int serverID, String serverBio, int serverMaxPlayers, HashMap<UUID, String> playerList)
                                 ServerInfoData data = new ServerInfoData(
-                                        hostName,
+                                        hostName.replaceAll("server-","").replaceAll(".yml",""),
                                         serverConfig.string("ProxyName"),
                                         serverConfig.integer("MinProtocolVer"),
                                         serverConfig.integer("MaxProtocolVer"),
@@ -198,7 +234,8 @@ public class Nanamiproxyplugin {
                                 );
 
                                 if (!hostName.equals("")){
-                                    ServerList.put(hostName, data);
+                                    //System.out.println(hostName.replaceAll("server-","").replaceAll(".yml",""));
+                                    ServerList.put(hostName.replaceAll("server-","").replaceAll(".yml",""), data);
                                 }
 
                             } catch (IOException e) {
@@ -210,17 +247,15 @@ public class Nanamiproxyplugin {
                     // プレーヤーのリストを構築
                     tempPlayerList.clear();
                     for (Player player : players){
-                        if (player.getCurrentServer().isPresent()){
-                            tempPlayerList.put(player.getCurrentServer().get().getServerInfo().getName(), player.getUniqueId());
+                        tempPlayerList.put(player.getCurrentServer().get().getServerInfo().getName(), player.getUniqueId());
 
-                            ServerInfoData data = ServerList.get(player.getVirtualHost().get().getHostName());
-                            if (data != null){
-                                // 設定ファイルで指定されている接続先のサーバー名と一致しなければ追加しない
-                                if (data.getProxyServerName().equals(player.getCurrentServer().get().getServerInfo().getName())){
-                                    HashMap<UUID, String> list = new HashMap<>(data.getPlayerList());
-                                    list.put(player.getUniqueId(), player.getUsername());
-                                    data.setPlayerList(list);
-                                }
+                        ServerInfoData data = ServerList.get(player.getVirtualHost().get().getHostName());
+                        if (data != null){
+                            // 設定ファイルで指定されている接続先のサーバー名と一致しなければ追加しない
+                            if (data.getProxyServerName().equals(player.getCurrentServer().get().getServerInfo().getName())){
+                                HashMap<UUID, String> list = new HashMap<>(data.getPlayerList());
+                                list.put(player.getUniqueId(), player.getUsername());
+                                data.setPlayerList(list);
                             }
                         }
                     }
@@ -312,6 +347,7 @@ public class Nanamiproxyplugin {
         if (data == null){
             return;
         }
+        //System.out.println(hostName);
 
         int PlayerCount = 0;
         HashMap<UUID, String> nameList = new HashMap<>();
