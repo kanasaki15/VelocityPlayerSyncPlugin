@@ -31,8 +31,8 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 @Plugin(
-        id = "nanamiproxyplugin",
-        name = "NanamiProxyPlugin",
+        id = "velocityplayersyncplugin",
+        name = "VelocityPlayerSyncPlugin",
         version = BuildConstants.VERSION,
         description = "NanamiProxyPlugin",
         url = "https://twitter.com/7mi_network",
@@ -55,7 +55,7 @@ public class Nanamiproxyplugin {
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
 
-        plugin = proxyServer.getPluginManager().getPlugin("nanamiproxyplugin");
+        plugin = proxyServer.getPluginManager().getPlugin("velocityplayersyncplugin");
 
         File file1 = new File("./plugins/" + plugin.get().getDescription().getName().get());
         File file2 = new File("./plugins/" + plugin.get().getDescription().getName().get() + "/server-sample.7mi.xyz.yml");
