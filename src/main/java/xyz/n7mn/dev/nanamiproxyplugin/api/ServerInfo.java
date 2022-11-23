@@ -22,10 +22,13 @@ public class ServerInfo {
         Connection temp;
 
         try {
+            Class.forName("org.sqlite.JDBC");
             temp = DriverManager.getConnection("jdbc:sqlite:"+pass+"/data.db");
         } catch (SQLException e){
             e.printStackTrace();
             temp = null;
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
 
         con = temp;
